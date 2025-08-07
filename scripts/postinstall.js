@@ -38,41 +38,53 @@ console.log(`${colors.blue}
 └─────────────────────────────────────────────────────────┘
 ${colors.reset}`);
 
-// Build the Go binary
+// Check if the binary exists (should be included in npm package)
 const binDir = path.join(__dirname, '..', 'bin');
-if (!fs.existsSync(binDir)) {
-    fs.mkdirSync(binDir, { recursive: true });
-}
-
 const platform = os.platform();
-const arch = os.arch();
 const binaryName = platform === 'win32' ? 'ai-git-auto.exe' : 'ai-git-auto';
 const binaryPath = path.join(binDir, binaryName);
 
-// Build the binary
-log('blue', '🔄', 'Building AI Git Auto binary...');
-try {
-    const buildCommand = `go build -o "${binaryPath}" ./cmd/ai-git-auto`;
-    execSync(buildCommand, {
-        cwd: path.join(__dirname, '..'),
-        stdio: 'inherit'
-    });
-    log('green', '✅', 'Binary built successfully');
-} catch (error) {
-    log('red', '❌', 'Failed to build binary. Make sure Go is installed.');
-    process.exit(1);
-}
-
-// Make binary executable on Unix systems
-if (platform !== 'win32') {
-    try {
-        execSync(`chmod +x "${binaryPath}"`);
-    } catch (error) {
-        log('yellow', '⚠️', 'Could not make binary executable');
+if (fs.existsSync(binaryPath)) {
+    log('green', '✅', 'AI Git Auto binary is ready!');
+    
+    // Make binary executable on Unix systems
+    if (platform !== 'win32') {
+        try {
+            execSync(`chmod +x "${binaryPath}"`);
+        } catch (error) {
+            log('yellow', '⚠️', 'Could not make binary executable');
+        }
     }
-}
-
-// Check if binary works
+} else {
+    log('red', '❌', 'Binary not found. Attempting to build from source...');
+    
+    // Try to build from source as fallback
+    try {
+        if (!fs.existsSync(binDir)) {
+            fs.mkdirSync(binDir, { recursive: true });
+        }
+        
+        log('blue', '🔄', 'Building AI Git Auto binary...');
+        const buildCommand = `go build -o "${binaryPath}" ./cmd/ai-git-auto`;
+        execSync(buildCommand, { 
+            cwd: path.join(__dirname, '..'),
+            stdio: 'inherit' 
+        });
+        log('green', '✅', 'Binary built successfully');
+        
+        // Make binary executable on Unix systems
+        if (platform !== 'win32') {
+            try {
+                execSync(`chmod +x "${binaryPath}"`);
+            } catch (error) {
+                log('yellow', '⚠️', 'Could not make binary executable');
+            }
+        }
+    } catch (error) {
+        log('red', '❌', 'Failed to build binary. Make sure Go is installed.');
+        process.exit(1);
+    }
+}// Check if binary works
 try {
     execSync(`"${binaryPath}" --version`, { stdio: 'ignore' });
     log('green', '✅', 'AI Git Auto installed successfully!');

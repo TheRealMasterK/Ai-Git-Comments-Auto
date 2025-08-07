@@ -2,7 +2,7 @@ class AiGitAuto < Formula
   desc "Automate your Git workflow with AI-powered commit messages using local Ollama models"
   homepage "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto"
   url "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto/archive/refs/tags/v1.0.0.tar.gz"
-  sha256 "b856de7b67244eaf3bec8aecfe262110538dd5e1a1e52d6424f24ff09264277d"
+  sha256 "2216df3a41fff3db321ae1e5159df6bdcd8ebd4b4472f57c88e34460b4ecbc81"
   license "MIT"
   version "1.0.0"
 
