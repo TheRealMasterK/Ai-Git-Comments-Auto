@@ -1,0 +1,46 @@
+{
+  "name": "ai-git-auto",
+  "version": "1.0.0",
+  "description": "Automate your Git workflow with AI-powered commit messages using local Ollama models",
+  "bin": {
+    "ai-git-auto": "./bin/ai-git-auto"
+  },
+  "files": [
+    "bin/",
+    "install.sh",
+    "README.md"
+  ],
+  "scripts": {
+    "preinstall": "node scripts/preinstall.js",
+    "postinstall": "node scripts/postinstall.js",
+    "test": "echo \"Testing ai-git-auto installation...\" && ./bin/ai-git-auto --version"
+  },
+  "keywords": [
+    "git",
+    "ai",
+    "commit",
+    "ollama",
+    "automation",
+    "cli",
+    "golang",
+    "conventional-commits"
+  ],
+  "author": "TheRealMasterK",
+  "license": "MIT",
+  "homepage": "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "preferGlobal": true
+}

@@ -13,25 +13,76 @@ A Go library and CLI tool that automatically stages changes, generates intellige
 - 🌍 **Global CLI**: Install once, use anywhere
 - � **Library + CLI**: Use as Go library or standalone CLI tool
 
-## 🚀 Quick Start (One Command)
+## 🚀 One-Click Installation (Super Easy!)
+
+**The easiest way to install AI Git Auto** - just run this one command:
 
 ```bash
-# Install globally
 curl -fsSL https://raw.githubusercontent.com/TheRealMasterK/Ai-Git-Comments-Auto/main/install.sh | bash
+```
 
-# Or build from source
-make global-install
+**What our installer does automatically:**
+- ✅ Checks your system (macOS/Linux)
+- ✅ Installs Go (if not present)
+- ✅ Installs Ollama (if not present)
+- ✅ Downloads a recommended AI model (`llama3.2:3b` - fast & efficient)
+- ✅ Builds and installs AI Git Auto globally
+- ✅ Verifies everything works
+- ✅ Shows you how to use it
 
-# Navigate to your Git repository and run
+**After installation, just navigate to any Git repo and run:**
+```bash
 ai-git-auto
 ```
 
+### Manual Installation (If You Prefer)
+
+If you want to install manually:
+
 This single command will:
+
 1. 📝 Stage all changes (`git add .`)
-2. 🔍 Analyze the changes
-3. 🤖 Generate an AI commit message
-4. 💾 Commit with the message
-5. 📤 Push to remote (with confirmation)
+2. 🔍 Analyze the changes and create detailed context
+3. 🤖 Let you choose from available AI models (with recommendations)
+4. 🎯 Generate an intelligent commit message using AI
+5. 💾 Commit with the generated message
+6. 📤 Push to remote repository
+
+### What You'll See
+
+When you run `ai-git-auto`, you'll get beautiful, detailed output like this:
+
+```bash
+🚀 AI Git Auto - One-Click Installation 🚀
+
+🔄 Staging all changes...
+✅ Changes staged successfully
+
+🔄 Scanning staged changes...
+✅ Found 3 files with changes:
+  • cmd/ai-git-auto/main.go (modified)
+  • gitcommenter.go (modified)
+  • README.md (new file)
+
+🔄 Available AI models:
+  1. llama3.2:3b (Recommended: Fast, efficient, good for code)
+  2. codellama:7b (Specialized for code generation)
+  3. mistral:7b (Good general model)
+
+Select model (1-3): 1
+
+🔄 Generating commit message with llama3.2:3b...
+✅ Generated commit message:
+  feat(ai-git-auto): add interactive model selection and enhanced logging
+
+🔄 Committing changes...
+✅ Changes committed successfully
+
+🔄 Pushing to remote repository...
+✅ Changes pushed to origin/main
+
+🎉 Git workflow completed successfully! 🎉
+```
 
 ## Prerequisites
    ```bash
