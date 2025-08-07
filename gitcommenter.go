@@ -218,27 +218,27 @@ func (gc *GitCommenter) buildChangeContext(changes []FileChange) string {
 
 	context.WriteString("REPOSITORY CHANGE SUMMARY:\n")
 	context.WriteString(fmt.Sprintf("Total Files Changed: %d\n", len(changes)))
-	
+
 	// Count changes by type
 	changeTypes := make(map[string]int)
 	totalAdded, totalRemoved := 0, 0
-	
+
 	for _, change := range changes {
 		changeTypes[change.ChangeType]++
 		totalAdded += change.LinesAdded
 		totalRemoved += change.LinesRemoved
 	}
-	
+
 	context.WriteString(fmt.Sprintf("Total Lines: +%d -%d\n", totalAdded, totalRemoved))
 	context.WriteString("Change Types: ")
-	
+
 	var typesSummary []string
 	for changeType, count := range changeTypes {
 		typesSummary = append(typesSummary, fmt.Sprintf("%d %s", count, changeType))
 	}
 	context.WriteString(strings.Join(typesSummary, ", "))
 	context.WriteString("\n\n")
-	
+
 	context.WriteString("DETAILED FILE BREAKDOWN:\n")
 	for i, change := range changes {
 		// Get file extension for context
@@ -246,10 +246,10 @@ func (gc *GitCommenter) buildChangeContext(changes []FileChange) string {
 		if dotIndex := strings.LastIndex(change.FilePath, "."); dotIndex != -1 {
 			ext = change.FilePath[dotIndex:]
 		}
-		
+
 		context.WriteString(fmt.Sprintf("%d. %s (%s%s):\n", i+1, change.FilePath, change.ChangeType, ext))
 		context.WriteString(fmt.Sprintf("   Lines changed: +%d -%d\n", change.LinesAdded, change.LinesRemoved))
-		
+
 		// Add file type context
 		switch ext {
 		case ".go":
@@ -298,7 +298,7 @@ func (gc *GitCommenter) buildPrompt(context string, changes []FileChange) string
 			prompt.WriteString(fmt.Sprintf("=== DETAILED CHANGES IN %s ===\n", change.FilePath))
 			prompt.WriteString(fmt.Sprintf("Change Type: %s\n", change.ChangeType))
 			prompt.WriteString(fmt.Sprintf("Lines Added: %d, Lines Removed: %d\n\n", change.LinesAdded, change.LinesRemoved))
-			
+
 			// Include more context but still truncate if very long
 			diff := change.Diff
 			if len(diff) > 2000 {
@@ -320,20 +320,20 @@ func (gc *GitCommenter) buildPrompt(context string, changes []FileChange) string
 	prompt.WriteString("3. SPECIFICALLY mentions what functionality was added/changed/fixed\n")
 	prompt.WriteString("4. Uses present tense, imperative mood (e.g., 'add', 'fix', 'update')\n")
 	prompt.WriteString("5. Includes a body with more details if the changes are significant\n\n")
-	
+
 	prompt.WriteString("IMPORTANT GUIDELINES:\n")
 	prompt.WriteString("- Be SPECIFIC about what changed (don't just say 'add functionality')\n")
 	prompt.WriteString("- Mention key functions, features, or components that were modified\n")
 	prompt.WriteString("- If it's a new file, mention what it contains or does\n")
 	prompt.WriteString("- If it's a modification, mention what was improved/changed\n")
 	prompt.WriteString("- Focus on the 'what' and 'why' of the changes\n\n")
-	
+
 	prompt.WriteString("Examples of GOOD commit messages:\n")
 	prompt.WriteString("- 'feat: add interactive model selection with recommendations'\n")
 	prompt.WriteString("- 'fix: correct model validation in prerequisites check'\n")
 	prompt.WriteString("- 'refactor: enhance logging with detailed progress indicators'\n")
 	prompt.WriteString("- 'feat: implement git push with remote repository detection'\n\n")
-	
+
 	prompt.WriteString("Examples of BAD commit messages (avoid these):\n")
 	prompt.WriteString("- 'add functionality'\n")
 	prompt.WriteString("- 'update files'\n")

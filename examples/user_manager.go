@@ -2,8 +2,8 @@
 package main
 
 import (
-    "fmt"
-    "time"
+	"strings"
+	"time"
 )
 
 type User struct {
