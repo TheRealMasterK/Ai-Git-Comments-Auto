@@ -1,20 +1,36 @@
 #!/bin/bash
 
-# AI Git Auto - Installation Script
-# This script installs the ai-git-auto CLI tool globally
+# AI Git Auto - One-Click Installation Script
+# This script installs ai-git-auto globally with all prerequisites
 
 set -e
 
 BINARY_NAME="ai-git-auto"
 REPO_URL="https://github.com/TheRealMasterK/Ai-Git-Comments-Auto"
 INSTALL_DIR="/usr/local/bin"
+TEMP_DIR="/tmp/ai-git-auto-install"
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
+
+# ASCII Art Banner
+print_banner() {
+    echo -e "${BLUE}"
+    echo "┌─────────────────────────────────────────────────────────┐"
+    echo "│                                                         │"
+    echo "│      🚀 AI Git Auto - One-Click Installation 🚀        │"
+    echo "│                                                         │"
+    echo "│     Automate your Git workflow with AI-powered         │"
+    echo "│          commit messages using local Ollama            │"
+    echo "│                                                         │"
+    echo "└─────────────────────────────────────────────────────────┘"
+    echo -e "${NC}\n"
+}
 
 # Helper functions
 log_info() {
