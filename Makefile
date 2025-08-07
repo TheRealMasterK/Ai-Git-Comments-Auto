@@ -1,6 +1,6 @@
 # Makefile for AI Git Comments Auto
 
-.PHONY: build test clean install deps run-example global-install uninstall
+.PHONY: build test clean install deps run-example global-install uninstall npm-prepare brew-prepare release
 
 # Variables
 MAIN_BINARY=ai-git-auto
@@ -36,6 +36,30 @@ build:
 build-main:
 	@echo "Building $(MAIN_BINARY)..."
 	go build -ldflags "-X main.version=$(VERSION)" -o $(MAIN_BINARY) $(MAIN_CMD_DIR)
+
+# Build for npm package (places binary in bin/ directory)
+npm-prepare: deps
+	@echo "Preparing npm package..."
+	@mkdir -p bin
+	go build -ldflags "-X main.version=$(VERSION)" -o bin/$(MAIN_BINARY) $(MAIN_CMD_DIR)
+	@chmod +x bin/$(MAIN_BINARY)
+	@echo "npm package prepared in bin/ directory"
+
+# Build for Homebrew (creates tarball)
+brew-prepare: deps test
+	@echo "Preparing Homebrew package..."
+	@git archive --format=tar.gz --prefix=ai-git-auto-$(VERSION)/ HEAD > ai-git-auto-$(VERSION).tar.gz
+	@echo "Created ai-git-auto-$(VERSION).tar.gz for Homebrew"
+	@echo "SHA256: $$(shasum -a 256 ai-git-auto-$(VERSION).tar.gz | cut -d' ' -f1)"
+
+# Release preparation
+release: test npm-prepare brew-prepare
+	@echo "Release $(VERSION) prepared!"
+	@echo ""
+	@echo "Installation methods:"
+	@echo "  Homebrew: brew install TheRealMasterK/tap/ai-git-auto"
+	@echo "  npm:      npm install -g ai-git-auto"
+	@echo "  curl:     curl -fsSL https://raw.githubusercontent.com/TheRealMasterK/Ai-Git-Comments-Auto/main/install.sh | bash"
 
 # Install the main CLI tool globally
 global-install: build-main

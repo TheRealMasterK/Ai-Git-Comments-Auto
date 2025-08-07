@@ -2,7 +2,7 @@ class AiGitAuto < Formula
   desc "Automate your Git workflow with AI-powered commit messages using local Ollama models"
   homepage "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto"
   url "https://github.com/TheRealMasterK/Ai-Git-Comments-Auto/archive/refs/tags/v1.0.0.tar.gz"
-  sha256 "placeholder_sha256_will_be_updated_on_release"
+  sha256 "b856de7b67244eaf3bec8aecfe262110538dd5e1a1e52d6424f24ff09264277d"
   license "MIT"
   version "1.0.0"
 
@@ -12,10 +12,10 @@ class AiGitAuto < Formula
   def install
     # Build the binary
     system "go", "build", "-o", "ai-git-auto", "./cmd/ai-git-auto"
-    
+
     # Install binary
     bin.install "ai-git-auto"
-    
+
     # Install completion scripts
     generate_completions_from_executable(bin/"ai-git-auto", "completion")
   end

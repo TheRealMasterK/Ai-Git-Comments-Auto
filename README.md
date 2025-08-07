@@ -13,15 +13,32 @@ A Go library and CLI tool that automatically stages changes, generates intellige
 - 🌍 **Global CLI**: Install once, use anywhere
 - � **Library + CLI**: Use as Go library or standalone CLI tool
 
-## 🚀 One-Click Installation (Super Easy!)
+## 🚀 Installation Methods
 
-**The easiest way to install AI Git Auto** - just run this one command:
+Choose your preferred installation method:
+
+### 📦 Package Managers (Recommended)
+
+**🍺 Homebrew (macOS/Linux):**
+```bash
+brew install TheRealMasterK/tap/ai-git-auto
+```
+
+**📦 npm (Cross-platform):**
+```bash
+npm install -g ai-git-auto
+```
+
+### 🔧 One-Click Script Installation
+
+**The easiest way to install from source:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/TheRealMasterK/Ai-Git-Comments-Auto/main/install.sh | bash
 ```
 
 **What our installer does automatically:**
+
 - ✅ Checks your system (macOS/Linux)
 - ✅ Installs Go (if not present)
 - ✅ Installs Ollama (if not present)
@@ -30,16 +47,14 @@ curl -fsSL https://raw.githubusercontent.com/TheRealMasterK/Ai-Git-Comments-Auto
 - ✅ Verifies everything works
 - ✅ Shows you how to use it
 
-**After installation, just navigate to any Git repo and run:**
+**After installation with any method, just navigate to any Git repo and run:**
 ```bash
 ai-git-auto
 ```
 
-### Manual Installation (If You Prefer)
+### 🛠️ Manual Installation (For Developers)
 
-If you want to install manually:
-
-This single command will:
+If you want to build from source:This single command will:
 
 1. 📝 Stage all changes (`git add .`)
 2. 🔍 Analyze the changes and create detailed context
