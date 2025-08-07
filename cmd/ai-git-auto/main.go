@@ -70,24 +70,90 @@ func main() {
 	}
 
 	// Verify prerequisites
+	fmt.Println("🔍 Verifying prerequisites...")
+	fmt.Println("   ➤ Checking Git repository...")
 	if err := verifyPrerequisites(); err != nil {
 		log.Fatalf("❌ %v", err)
 	}
+	fmt.Printf("   ✅ Git repository confirmed\n")
+
+	// Check Ollama connection and model
+	fmt.Printf("   ➤ Testing connection to Ollama at %s...\n", *endpoint)
+	availableModels, err := commenter.ListAvailableModels()
+	if err != nil {
+		log.Fatalf("❌ Failed to connect to Ollama: %v", err)
+	}
+	fmt.Printf("   ✅ Connected successfully (%d models available)\n", len(availableModels))
+
+	// Verify selected model exists or let user choose
+	modelExists := false
+	for _, availableModel := range availableModels {
+		if availableModel == *model {
+			modelExists = true
+			break
+		}
+	}
+
+	if !modelExists {
+		fmt.Printf("   ⚠️  Model '%s' not found.\n", *model)
+
+		if len(availableModels) == 0 {
+			log.Fatalf("❌ No Ollama models available. Please pull a model first:\n   ollama pull llama3.2")
+		}
+
+		// Interactive model selection
+		fmt.Println("   📚 Available models:")
+		for i, availableModel := range availableModels {
+			recommendation := getModelRecommendation(availableModel)
+			fmt.Printf("      %d. %s%s\n", i+1, availableModel, recommendation)
+		}
+
+		selectedModel, err := promptUserForModel(availableModels)
+		if err != nil {
+			log.Fatalf("❌ Model selection cancelled")
+		}
+		*model = selectedModel
+	}
+
+	fmt.Printf("   ✅ Using AI model: %s\n", *model)
+
+	// Update config with selected model
+	config.Model = *model
 
 	// Get current directory for display
 	pwd, _ := os.Getwd()
-	fmt.Printf("📂 Working directory: %s\n", pwd)
+	fmt.Printf("   📂 Working directory: %s\n", pwd)
 
 	// Step 1: Git add (unless skipped)
 	if !*skipAdd {
-		fmt.Println("\n📝 Step 1: Staging changes...")
+		fmt.Println("\n📝 Step 1: Staging changes (git add .)...")
+
+		// Show what files will be staged
+		fmt.Println("   ➤ Checking for unstaged changes...")
+		unstagedFiles, err := getUnstagedFiles()
+		if err != nil {
+			fmt.Printf("   ⚠️  Warning: Could not list unstaged files: %v\n", err)
+		} else if len(unstagedFiles) > 0 {
+			fmt.Printf("   ➤ Found %d unstaged file(s):\n", len(unstagedFiles))
+			for i, file := range unstagedFiles {
+				if i >= 5 { // Limit display to first 5 files
+					fmt.Printf("      ... and %d more files\n", len(unstagedFiles)-5)
+					break
+				}
+				fmt.Printf("      • %s\n", file)
+			}
+		} else {
+			fmt.Println("   ➤ No unstaged files found")
+		}
+
 		if *dryRun {
 			fmt.Println("   [DRY RUN] Would run: git add .")
 		} else {
+			fmt.Println("   ➤ Running: git add .")
 			if err := runGitAdd(); err != nil {
 				log.Fatalf("❌ Failed to stage changes: %v", err)
 			}
-			fmt.Println("✅ Changes staged successfully")
+			fmt.Println("   ✅ Changes staged successfully")
 		}
 	} else {
 		fmt.Println("\n📝 Step 1: Using already staged changes...")
@@ -114,10 +180,15 @@ func main() {
 	displayChangesSummary(changes)
 
 	fmt.Printf("\n🤖 Step 3: Generating AI commit message (using %s)...\n", *model)
+	fmt.Println("   ➤ Analyzing file changes and diffs...")
+	fmt.Printf("   ➤ Sending context to Ollama model '%s'...\n", *model)
+
 	suggestion, err := commenter.GenerateCommitMessage(changes)
 	if err != nil {
 		log.Fatalf("❌ Failed to generate commit message: %v", err)
 	}
+
+	fmt.Printf("   ✅ AI commit message generated (confidence: %.0f%%)\n", suggestion.Confidence*100)
 
 	// Display the suggestion
 	displayCommitSuggestion(suggestion)
@@ -133,12 +204,18 @@ func main() {
 		}
 		fmt.Println()
 	} else if commitApproved {
+		fmt.Println("   ➤ Running git commit...")
 		if err := runGitCommit(suggestion); err != nil {
 			log.Fatalf("❌ Failed to commit: %v", err)
 		}
-		fmt.Println("✅ Changes committed successfully")
+		fmt.Println("   ✅ Changes committed successfully")
+
+		// Show commit hash
+		if hash, err := getLastCommitHash(); err == nil {
+			fmt.Printf("   📝 Commit hash: %s\n", hash)
+		}
 	} else {
-		fmt.Println("❌ Commit cancelled by user")
+		fmt.Println("   ❌ Commit cancelled by user")
 		return
 	}
 
@@ -147,24 +224,38 @@ func main() {
 		fmt.Println("\n📤 Step 5: Pushing to remote...")
 
 		// Check if there's a remote configured
-		if !hasRemoteConfigured() {
-			fmt.Println("⚠️  No remote repository configured, skipping push")
+		fmt.Println("   ➤ Checking for remote repositories...")
+		remotes, err := getConfiguredRemotes()
+		if err != nil || len(remotes) == 0 {
+			fmt.Println("   ⚠️  No remote repository configured, skipping push")
+			fmt.Println("   💡 Add a remote with: git remote add origin <url>")
 		} else {
+			fmt.Printf("   ➤ Found remote(s): %s\n", strings.Join(remotes, ", "))
+
+			// Check current branch
+			branch, err := getCurrentBranch()
+			if err == nil {
+				fmt.Printf("   ➤ Current branch: %s\n", branch)
+			}
+
 			pushApproved := !*interactive || *force || askForApproval("push to remote")
 
 			if *dryRun {
 				fmt.Println("   [DRY RUN] Would run: git push")
 			} else if pushApproved {
+				fmt.Println("   ➤ Running: git push")
 				if err := runGitPush(); err != nil {
-					log.Printf("⚠️  Failed to push: %v", err)
-					fmt.Println("💡 You can push manually later with: git push")
+					log.Printf("   ⚠️  Failed to push: %v", err)
+					fmt.Println("   💡 You can push manually later with: git push")
 				} else {
-					fmt.Println("✅ Changes pushed successfully")
+					fmt.Println("   ✅ Changes pushed successfully")
 				}
 			} else {
-				fmt.Println("📝 Push skipped. You can push manually with: git push")
+				fmt.Println("   📝 Push skipped. You can push manually with: git push")
 			}
 		}
+	} else {
+		fmt.Println("\n📤 Step 5: Skipping push (--skip-push flag used)")
 	}
 
 	fmt.Println("\n🎉 Workflow completed!")
@@ -225,18 +316,32 @@ func runGitPush() error {
 }
 
 func displayChangesSummary(changes []gitcommenter.FileChange) {
-	fmt.Printf("📊 Found %d staged file(s):\n", len(changes))
+	fmt.Printf("   📊 Found %d staged file(s):\n", len(changes))
 
 	totalAdded, totalRemoved := 0, 0
+	filesByType := make(map[string]int)
+
 	for _, change := range changes {
 		icon := getChangeIcon(change.ChangeType)
-		fmt.Printf("   %s %s (+%d -%d)\n",
+		fmt.Printf("      %s %s (+%d -%d lines)\n",
 			icon, change.FilePath, change.LinesAdded, change.LinesRemoved)
 		totalAdded += change.LinesAdded
 		totalRemoved += change.LinesRemoved
+		filesByType[change.ChangeType]++
 	}
 
-	fmt.Printf("📈 Total: +%d -%d lines\n", totalAdded, totalRemoved)
+	fmt.Printf("   📈 Total changes: +%d -%d lines\n", totalAdded, totalRemoved)
+
+	// Show summary by change type
+	var summary []string
+	for changeType, count := range filesByType {
+		if count > 0 {
+			summary = append(summary, fmt.Sprintf("%d %s", count, changeType))
+		}
+	}
+	if len(summary) > 0 {
+		fmt.Printf("   📋 Summary: %s\n", strings.Join(summary, ", "))
+	}
 }
 
 func getChangeIcon(changeType string) string {
@@ -277,4 +382,133 @@ func askForApproval(action string) bool {
 
 	// Default to yes if empty response
 	return response == "" || response == "y" || response == "yes"
+}
+
+func getUnstagedFiles() ([]string, error) {
+	cmd := exec.Command("git", "diff", "--name-only")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	var files []string
+	for _, line := range lines {
+		if line != "" {
+			files = append(files, line)
+		}
+	}
+
+	// Also get untracked files
+	cmd = exec.Command("git", "ls-files", "--others", "--exclude-standard")
+	output, err = cmd.Output()
+	if err == nil {
+		untrackedLines := strings.Split(strings.TrimSpace(string(output)), "\n")
+		for _, line := range untrackedLines {
+			if line != "" {
+				files = append(files, line+" (untracked)")
+			}
+		}
+	}
+
+	return files, nil
+}
+
+func getLastCommitHash() (string, error) {
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output))[:7], nil // Return short hash
+}
+
+func getConfiguredRemotes() ([]string, error) {
+	cmd := exec.Command("git", "remote")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	var remotes []string
+	for _, line := range lines {
+		if line != "" {
+			remotes = append(remotes, line)
+		}
+	}
+	return remotes, nil
+}
+
+func getCurrentBranch() (string, error) {
+	cmd := exec.Command("git", "branch", "--show-current")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
+func promptUserForModel(availableModels []string) (string, error) {
+	if len(availableModels) == 0 {
+		return "", fmt.Errorf("no models available")
+	}
+
+	fmt.Print("\n   🤖 Please select a model (1-", len(availableModels), ") or press Enter for default: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+
+	input = strings.TrimSpace(input)
+
+	// If empty input, use first available model
+	if input == "" {
+		fmt.Printf("   ➤ Using default model: %s\n", availableModels[0])
+		return availableModels[0], nil
+	}
+
+	// Parse selection
+	var selection int
+	n, err := fmt.Sscanf(input, "%d", &selection)
+	if n != 1 || err != nil || selection < 1 || selection > len(availableModels) {
+		fmt.Printf("   ❌ Invalid selection. Using default model: %s\n", availableModels[0])
+		return availableModels[0], nil
+	}
+
+	selectedModel := availableModels[selection-1]
+	fmt.Printf("   ➤ Selected model: %s\n", selectedModel)
+	return selectedModel, nil
+}
+
+func getModelRecommendation(modelName string) string {
+	modelLower := strings.ToLower(modelName)
+
+	switch {
+	case strings.Contains(modelLower, "llama3"):
+		return " 🌟 (Recommended - Great for code)"
+	case strings.Contains(modelLower, "codellama"):
+		return " 💻 (Best for coding)"
+	case strings.Contains(modelLower, "qwen"):
+		if strings.Contains(modelLower, "32b") {
+			return " 🚀 (Powerful but slow)"
+		} else if strings.Contains(modelLower, "7b") {
+			return " ⚡ (Good balance)"
+		}
+		return " 🧠 (Smart choice)"
+	case strings.Contains(modelLower, "mistral"):
+		return " ⚡ (Fast and efficient)"
+	case strings.Contains(modelLower, "llama2"):
+		return " 🏛️ (Reliable classic)"
+	case strings.Contains(modelLower, "3b"):
+		return " ⚡ (Fast and light)"
+	case strings.Contains(modelLower, "7b"):
+		return " ⚖️ (Balanced)"
+	case strings.Contains(modelLower, "13b") || strings.Contains(modelLower, "32b"):
+		return " 🐢 (Slow but accurate)"
+	default:
+		return ""
+	}
 }

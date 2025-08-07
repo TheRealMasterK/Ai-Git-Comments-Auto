@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	// Create a default configuration
+	// Create a default configuration with enhanced settings for better AI analysis
 	config := gitcommenter.DefaultConfig()
 
 	// Customize configuration if needed
